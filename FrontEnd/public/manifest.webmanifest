@@ -1,0 +1,23 @@
+{
+  "name": "Civis RJ - Centro de Comando Preditivo",
+  "short_name": "Civis RJ",
+  "description": "Painel operacional preditivo de obras públicas do Rio de Janeiro.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='36' fill='%230b1220'/><path d='M96 36l52 22v34c0 32-22 58-52 64-30-6-52-32-52-64V58z' fill='none' stroke='%2322d3ee' stroke-width='8' stroke-linejoin='round'/><path d='M70 100l18 18 36-40' fill='none' stroke='%2322d3ee' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='%230b1220'/><path d='M256 96l140 60v90c0 86-58 156-140 172-82-16-140-86-140-172v-90z' fill='none' stroke='%2322d3ee' stroke-width='20' stroke-linejoin='round'/><path d='M186 268l48 48 96-108' fill='none' stroke='%2322d3ee' stroke-width='20' stroke-linecap='round' stroke-linejoin='round'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
