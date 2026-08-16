@@ -1,0 +1,13 @@
+spring.application.name=civisanalytics
+
+spring.datasource.url=jdbc:postgresql://localhost:5173/civis_analytics
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+spring.servlet.multipart.max-file-size=25MB
+spring.servlet.multipart.max-request-size=25MB
+
+app.upload-dir=./uploads
+server.port=8080
