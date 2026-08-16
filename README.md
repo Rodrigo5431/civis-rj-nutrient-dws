@@ -42,7 +42,7 @@ Neste MVP, integramos a **Nutrient DWS Data Extraction API** para automatizar es
 ---
 
 ## 📁 Estrutura do Monorepo
-
+```
 civis-rj/
 ├── backend/                  # API REST em Spring Boot
 │   ├── src/main/java/        # Controllers, Services, Repositories e Entidades
@@ -54,7 +54,7 @@ civis-rj/
 │   └── package.json          # Dependências Node
 ├── .gitignore
 └── README.md
-
+```
 ---
 
 ## ⚙️ Como Executar o Projeto Localmente
@@ -69,6 +69,7 @@ civis-rj/
 ### 1. Configuração do Banco de Dados
 Execute o script de criação da tabela de auditoria no seu banco PostgreSQL:
 
+```
 CREATE TABLE IF NOT EXISTS contract_audits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     id_obra TEXT NOT NULL,
@@ -87,7 +88,7 @@ CREATE TABLE IF NOT EXISTS contract_audits (
 
 CREATE INDEX IF NOT EXISTS idx_contract_audits_id_obra ON contract_audits(id_obra);
 CREATE INDEX IF NOT EXISTS idx_contract_audits_status ON contract_audits(status);
-
+```
 ---
 
 ### 2. Executando o Backend (Spring Boot)
@@ -96,12 +97,14 @@ CREATE INDEX IF NOT EXISTS idx_contract_audits_status ON contract_audits(status)
    cd backend
 
 2. Configure suas credenciais de banco no arquivo `src/main/resources/application.properties`:
+   ```
    spring.datasource.url=jdbc:postgresql://db.SEU_PROJETO.supabase.co:5432/postgres
    spring.datasource.username=postgres
    spring.datasource.password=SUA_SENHA_DO_BANCO
    spring.jpa.hibernate.ddl-auto=update
+   ```
 
-3. Inicie o servidor:
+4. Inicie o servidor:
    mvn spring-boot:run
    
    *O backend estará rodando em `http://localhost:8080`.*
