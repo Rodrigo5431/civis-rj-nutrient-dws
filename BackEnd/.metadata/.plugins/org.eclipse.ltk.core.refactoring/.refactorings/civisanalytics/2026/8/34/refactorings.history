@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<session version="1.0">
-<refactoring comment="Rename compilation unit &apos;com.civisanalytics.config.Webconfig.java&apos; to &apos;WebConfig.java&apos;&#x0D;&#x0A;- Original project: &apos;civisanalytics&apos;&#x0D;&#x0A;- Original element: &apos;com.civisanalytics.config.Webconfig.java&apos;&#x0D;&#x0A;- Renamed element: &apos;com.civisanalytics.config.WebConfig.java&apos;" description="Rename compilation unit &apos;Webconfig.java&apos;" flags="2" id="org.eclipse.jdt.ui.rename.compilationunit" input="/src\/main\/java=/optional=/true=/=/maven.pomderived=/true=/&lt;com.civisanalytics.config{Webconfig.java" name="WebConfig.java" references="false" stamp="1786916078655" version="1.0"/>
-</session>
