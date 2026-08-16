@@ -1,0 +1,40 @@
+# =========================
+# FRONTEND (Node / React)
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# =========================
+# BACKEND (Java / Spring Boot)
+# =========================
+backend/target/
+backend/bin/
+backend/*.jar
+backend/*.war
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/uploads/
+
+# =========================
+# VARIÁVEIS DE AMBIENTE (SEGREDO)
+# =========================
+.env
+*.env
+.env.local
+.env.development
+.env.test
+.env.production
+backend/src/main/resources/application-secret.properties
+application.properties
+
+# =========================
+# IDEs E SISTEMA OPERACIONAL
+# =========================
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
