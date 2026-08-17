@@ -1,0 +1,5 @@
+package com.civisanalytics.config;
+
+public class Webconfig {
+
+}
