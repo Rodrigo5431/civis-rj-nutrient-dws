@@ -10,7 +10,8 @@ import { FiltrosBar, type Filtros } from "./Filtros";
 import { KpiCards } from "./KpiCards";
 import { LabIA } from "./LabIA";
 import { RankingChart } from "./RankingChart";
-import { ContractAuditor } from "./ContractAuditor"; // <-- NOVO IMPORT
+import { ContractAuditor } from "./ContractAuditor";
+import { DueDiligencePanel } from "./DueDiligencePanel";
 
 const MapaCivis = lazy(() =>
   import("./MapaCivis").then((m) => ({ default: m.MapaCivis })),
@@ -95,7 +96,8 @@ export function Dashboard() {
           <TabsList className="border border-white/10 bg-white/5">
             <TabsTrigger value="op">Visão Operacional</TabsTrigger>
             <TabsTrigger value="ia">Laboratório de IA</TabsTrigger>
-            <TabsTrigger value="dws">Auditoria DWS</TabsTrigger> {/* <-- NOVA ABA */}
+            <TabsTrigger value="dws">Auditoria DWS</TabsTrigger>
+            <TabsTrigger value="diligencia">Diligência (SerpApi)</TabsTrigger> 
           </TabsList>
 
           <TabsContent value="op" className="mt-4 space-y-6">
@@ -146,9 +148,12 @@ export function Dashboard() {
             <LabIA obras={obrasFiltradas} />
           </TabsContent>
 
-          {/* <-- NOVO CONTEÚDO DA ABA --> */}
           <TabsContent value="dws" className="mt-4">
             <ContractAuditor />
+          </TabsContent>
+
+          <TabsContent value="diligencia" className="mt-4">
+            <DueDiligencePanel />
           </TabsContent>
 
         </Tabs>

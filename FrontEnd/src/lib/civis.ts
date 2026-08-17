@@ -1,9 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 
-// =====================================================================
-// CONEXÃO BLINDADA PARA SSR E CLIENT (Com Fallback de Segurança)
-// O Vite resolve o import.meta.env automaticamente. Se falhar, usa a string real.
-// =====================================================================
 export const OBRAS_SUPABASE_URL = 
   import.meta.env.VITE_SUPABASE_URL;
 
@@ -14,17 +10,11 @@ export const obrasSupabase = createClient(OBRAS_SUPABASE_URL, OBRAS_SUPABASE_ANO
   auth: { persistSession: false },
 });
 
-// =====================================================================
-// OPENROUTER (Copiloto Civis)
-// =====================================================================
 export const OPENROUTER_API_KEY = 
   import.meta.env.VITE_OPENROUTER_API_KEY ;
 
-export const OPENROUTER_MODEL = "meta-llama/llama-3-8b-instruct";
+export const OPENROUTER_MODEL = "meta-llama/llama-3.1-8b-instruct";
 
-// =====================================================================
-// TIPOS E HELPERS (Mantidos intactos)
-// =====================================================================
 export type Obra = Record<string, any> & {
   id?: string | number;
   situacao?: string | null;
