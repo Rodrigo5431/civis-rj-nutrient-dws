@@ -20,13 +20,14 @@ import com.civisanalytics.audit.dto.AuditUploadResponse;
 public class AuditService {
 
 	private final ContractAuditRepository repository;
-	private final NutrientDwsMockService dwsMockService;
+	// Trocamos o Mock pelo serviço real aqui
+	private final NutrientDwsService dwsService;
 	private final String uploadDir;
 
-	public AuditService(ContractAuditRepository repository, NutrientDwsMockService dwsMockService,
+	public AuditService(ContractAuditRepository repository, NutrientDwsService dwsService,
 			@Value("${app.upload-dir}") String uploadDir) {
 		this.repository = repository;
-		this.dwsMockService = dwsMockService;
+		this.dwsService = dwsService;
 		this.uploadDir = uploadDir;
 	}
 
@@ -42,7 +43,8 @@ public class AuditService {
 		audit.setStatus(AuditStatus.PENDING_EXTRACTION);
 		repository.save(audit);
 
-		NutrientDwsMockService.DwsExtractionResult result = dwsMockService.extractData(storedPath);
+		// Chamamos a API real
+		NutrientDwsService.DwsExtractionResult result = dwsService.extractData(storedPath);
 
 		audit.setDwsDocumentId(result.documentId());
 		audit.setDwsViewerUrl(result.viewerUrl());

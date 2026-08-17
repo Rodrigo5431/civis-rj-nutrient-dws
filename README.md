@@ -1,75 +1,79 @@
-# 🏛️ Civis RJ - Centro de Comando Preditivo
+# 🏛️ Civis RJ - Predictive Command Center
 
 ![Status](https://img.shields.io/badge/Status-Hackathon_MVP-blue)
 ![Stack](https://img.shields.io/badge/Stack-React_%7C_Spring_Boot_%7C_Supabase-cyan)
-![Nutrient](https://img.shields.io/badge/Integração-Nutrient_DWS-emerald)
+![Integrations](https://img.shields.io/badge/Integrations-Nutrient_DWS_%7C_SerpApi_%7C_OpenRouter-emerald)
 
-O **Civis RJ** é uma plataforma de inteligência preditiva voltada para a gestão e fiscalização de obras públicas. Desenvolvido para atuar como um centro de comando operacional, o sistema monitora obras em tempo real e realiza a **auditoria automatizada de editais e contratos** para prevenir inconformidades, atrasos e desperdício de recursos públicos.
-
----
-
-## 🚀 O Desafio e a Solução
-
-A auditoria manual de contratos em licitações e execuções de obras públicas consome semanas de análise técnica e é altamente suscetível a erros humanos ou omissões de cláusulas críticas.
-
-Neste MVP, integramos a **Nutrient DWS Data Extraction API** para automatizar esse fluxo de ponta a ponta:
-
-1. **Upload do Documento:** O auditor seleciona a obra correspondente e envia o edital/contrato em formato PDF.
-2. **Processamento via Backend:** A API em Spring Boot recebe o arquivo, armazena os metadados no PostgreSQL (Supabase) e despacha o arquivo para extração.
-3. **Extração Inteligente:** O serviço da Nutrient DWS analisa o documento e extrai dados vitais estruturados (valores contratuais, prazos e metadados de execução).
-4. **Visualização e Auditoria:** O frontend exibe a interface com visualizador do documento e permite a validação e assinatura rápida pelo auditor.
+**Civis RJ** is a predictive intelligence platform designed for the management and auditing of public works. Acting as an operational command center, the system monitors construction projects in real-time and performs **automated audits of government contracts and public tenders** to prevent non-compliance, delays, and waste of public funds.
 
 ---
 
-## 🛠️ Arquitetura e Tecnologias
+## 🚀 The Challenge & Our Solution
+
+Manual auditing of public construction contracts takes weeks of technical analysis and is highly susceptible to human error, fraud, or the omission of critical clauses. 
+
+In this MVP, we built a robust pipeline integrating the **Nutrient DWS Data Extraction API**, **SerpApi**, and **OpenRouter (LLMs)** to automate this end-to-end workflow:
+
+1. **Security & Context Validation:** The Spring Boot backend intercepts the uploaded PDF, checking its "Magic Bytes" to prevent malicious files, and uses Apache PDFBox to ensure the document contains actual legal context before processing.
+2. **Real-Time Due Diligence (SerpApi):** Before approving a contract, the system scrapes the web for news regarding the contractor to detect recent fraud allegations or delays.
+3. **Intelligent Extraction (Nutrient DWS):** The document is sent to Nutrient DWS to extract vital structured data (contract values, deadlines, and execution metadata) using a custom JSON Schema.
+4. **Human-in-the-Loop & AI Verdict:** The auditor visualizes the extracted data alongside the original document in the DWS Viewer. Upon human approval, our AI Copilot (via OpenRouter) generates a final predictive audit report combining the extracted document data and web intelligence.
+
+---
+
+## 🛠️ Architecture & Technologies
 
 ### **Frontend**
-* **React 18** com **TypeScript**
+* **React 18** with **TypeScript**
 * **Vite**
 * **Tailwind CSS** + **Shadcn UI**
-* **Lucide React** (Ícones)
+* **Lucide React** (Icons)
 
 ### **Backend**
 * **Java 17+**
 * **Spring Boot 3** (Spring Web, Spring Data JPA, Spring Validation)
-* **PostgreSQL** hospedado no **Supabase**
+* **Apache PDFBox** (Document context validation)
+* **PostgreSQL** hosted on **Supabase**
 * **HikariCP** (Connection Pooling)
 
-### **Serviços & Integrações**
-* **Nutrient DWS API** (Extração de dados e visualização de documentos)
-* **Supabase** (Banco de dados relacional e infraestrutura em nuvem)
+### **Services & APIs**
+* **Nutrient DWS API** (Data Extraction & Interactive Document Viewer)
+* **SerpApi** (Real-time Google News scraping for contractor due diligence)
+* **OpenRouter API** (LLM routing for the AI Copilot final verdict)
+* **Supabase** (Relational database and cloud infrastructure)
 
 ---
 
-## 📁 Estrutura do Monorepo
-```
+## 📁 Monorepo Structure
+```text
 civis-rj/
-├── backend/                  # API REST em Spring Boot
-│   ├── src/main/java/        # Controllers, Services, Repositories e Entidades
+├── backend/                  # REST API in Spring Boot
+│   ├── src/main/java/        # Controllers, Services, Repositories, and Entities
 │   ├── src/main/resources/   # application.properties
-│   └── pom.xml               # Dependências Maven
-├── frontend/                 # Aplicação Web em React + Vite
-│   ├── src/components/civis/ # Dashboards, Mapas e Telas de Auditoria
-│   ├── src/routes/           # Rotas da aplicação
-│   └── package.json          # Dependências Node
+│   └── pom.xml               # Maven Dependencies
+├── frontend/                 # Web Application in React + Vite
+│   ├── src/components/civis/ # Dashboards, Maps, and Audit Panels
+│   ├── src/routes/           # Application Routing
+│   └── package.json          # Node Dependencies
 ├── .gitignore
 └── README.md
 ```
----
-
-## ⚙️ Como Executar o Projeto Localmente
-
-### Pré-requisitos
-* **Java 17+** e **Maven** instalados
-* **Node.js 18+** e **npm** (ou yarn/pnpm)
-* Instância do **PostgreSQL** (ou projeto no **Supabase**)
 
 ---
 
-### 1. Configuração do Banco de Dados
-Execute o script de criação da tabela de auditoria no seu banco PostgreSQL:
+## ⚙️ How to Run Locally
 
-```
+### Prerequisites
+* **Java 17+** and **Maven** installed
+* **Node.js 18+** and **npm** (or yarn/pnpm)
+* **PostgreSQL** instance (or a **Supabase** project)
+
+---
+
+### 1. Database Setup
+Run the following SQL script to create the audit table in your PostgreSQL database:
+
+```sql
 CREATE TABLE IF NOT EXISTS contract_audits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     id_obra TEXT NOT NULL,
@@ -89,43 +93,59 @@ CREATE TABLE IF NOT EXISTS contract_audits (
 CREATE INDEX IF NOT EXISTS idx_contract_audits_id_obra ON contract_audits(id_obra);
 CREATE INDEX IF NOT EXISTS idx_contract_audits_status ON contract_audits(status);
 ```
+
 ---
 
-### 2. Executando o Backend (Spring Boot)
+### 2. Running the Backend (Spring Boot)
 
-1. Navegue até a pasta do backend:
+1. Navigate to the backend folder:
+   ```bash
    cd backend
-
-2. Configure suas credenciais de banco no arquivo `src/main/resources/application.properties`:
    ```
-   spring.datasource.url=jdbc:postgresql://db.SEU_PROJETO.supabase.co:5432/postgres
+
+2. Configure your credentials in `src/main/resources/application.properties`:
+   ```properties
+   # Database
+   spring.datasource.url=jdbc:postgresql://db.YOUR_PROJECT.supabase.co:5432/postgres
    spring.datasource.username=postgres
-   spring.datasource.password=SUA_SENHA_DO_BANCO
+   spring.datasource.password=YOUR_DB_PASSWORD
    spring.jpa.hibernate.ddl-auto=update
+   
+   # APIs
+   nutrient.api-key=YOUR_NUTRIENT_API_KEY
+   nutrient.api-url=[https://api.nutrient.io](https://api.nutrient.io)
+   serpapi.api-key=YOUR_SERPAPI_KEY
    ```
 
-4. Inicie o servidor:
+3. Start the server:
+   ```bash
    mvn spring-boot:run
-   
-   *O backend estará rodando em `http://localhost:8080`.*
+   ```
+   *The backend will run on `http://localhost:8080`.*
 
 ---
 
-### 3. Executando o Frontend (React)
+### 3. Running the Frontend (React)
 
-1. Em outro terminal, navegue até a pasta do frontend:
+1. In a new terminal, navigate to the frontend folder:
+   ```bash
    cd frontend
+   ```
 
-2. Crie um arquivo `.env` na raiz do frontend com o endpoint da API:
+2. Create a `.env` file in the frontend root:
+   ```env
    VITE_API_BASE_URL=http://localhost:8080/api/audits
+   VITE_OPENROUTER_API_KEY=YOUR_OPENROUTER_API_KEY
+   ```
 
-3. Instale as dependências e inicialize o servidor de desenvolvimento:
+3. Install dependencies and start the development server:
+   ```bash
    npm install
    npm run dev
-   
-   *Acesse a interface no navegador através de `http://localhost:5173`.*
+   ```
+   *Access the interface at `http://localhost:5173`.*
 
 ---
 
-## 👥 Desenvolvido para o Hackathon DevNetwork
-Projeto concebido para modernizar e acelerar a fiscalização de obras e contratos públicos com uso de Inteligência Artificial e processamento de documentos.
+## 👥 Developed for the DevNetwork Hackathon
+Designed and engineered by Rodrigo Carvalho Lima. Built to modernize public administration, ensure compliance, and leverage AI for flawless document processing and urban management.
