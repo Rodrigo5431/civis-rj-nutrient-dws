@@ -17,7 +17,7 @@ Interface web interativa e centro de comando preditivo para acompanhamento de ob
 ---
 
 ## 📂 Estrutura de Pastas
-
+```
 src/
 ├── components/
 │   ├── ui/                    # Componentes base (Card, Tabs, etc.)
@@ -31,7 +31,7 @@ src/
 ├── hooks/
 │   └── useObras.ts            # Hook customizado de consumo de dados
 └── vite-env.d.ts              # Definições de tipagem das variáveis Vite
-
+```
 ---
 
 ## ⚙️ Variáveis de Ambiente
