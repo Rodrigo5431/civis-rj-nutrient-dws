@@ -213,15 +213,13 @@ export function ContractAuditor() {
   const [audit, setAudit] = useState<AuditUploadResponse | null>(null);
   
   const [isApproved, setIsApproved] = useState<boolean>(false);
-  const [isApproving, setIsApproving] = useState<boolean>(false); // Previne cliques duplos na aprovação
+  const [isApproving, setIsApproving] = useState<boolean>(false); 
   
   const [parecerIA, setParecerIA] = useState<string | null>(null);
   const [isGeneratingParecer, setIsGeneratingParecer] = useState<boolean>(false);
 
-  // Um 'key' para forçar a renderização do input file ao limpar o formulário
   const [formKey, setFormKey] = useState<number>(0); 
 
-  // Função para limpar e reiniciar todo o formulário (Nova Auditoria)
   function handleReset() {
     setIdObra("");
     setFile(null);
@@ -229,7 +227,7 @@ export function ContractAuditor() {
     setIsApproved(false);
     setParecerIA(null);
     setError(null);
-    setFormKey(prev => prev + 1); // Força o reset visual do <input type="file">
+    setFormKey(prev => prev + 1); 
   }
 
   async function handleUpload(event: FormEvent<HTMLFormElement>) {
@@ -345,7 +343,6 @@ export function ContractAuditor() {
     }
   }
 
-  // Verifica se o formulário deve estar bloqueado (Se já houver uma auditoria em tela)
   const isFormLocked = audit !== null;
 
   return (
@@ -368,7 +365,6 @@ export function ContractAuditor() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* COLUNA ESQUERDA - FORMULÁRIO */}
         <div>
           <form onSubmit={handleUpload} className="flex flex-col gap-5">
             <label className="flex flex-col gap-2">
@@ -386,7 +382,7 @@ export function ContractAuditor() {
             <label className="flex flex-col gap-2">
               <span className="text-sm font-medium text-slate-300">Documento (PDF)</span>
               <input
-                key={formKey} // Força o React a limpar o valor do arquivo ao resetar
+                key={formKey} 
                 type="file"
                 accept="application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
@@ -395,7 +391,6 @@ export function ContractAuditor() {
               />
             </label>
 
-            {/* Alterna entre o botão de Enviar e o de Resetar */}
             {!isFormLocked ? (
               <button
                 type="submit"
@@ -424,7 +419,6 @@ export function ContractAuditor() {
           </form>
         </div>
 
-        {/* COLUNA DIREITA - FLUXO DE AUDITORIA */}
         <div>
           {audit ? (
             <div className="rounded-xl border border-white/10 bg-slate-900/40 p-6 h-full flex flex-col shadow-inner animate-in fade-in duration-300">
