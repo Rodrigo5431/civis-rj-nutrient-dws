@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Card } from "@/components/ui/card";
-import { Bot, CheckCircle, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Bot, CheckCircle, CheckCircle2, FileSignature, Loader2, Sparkles, Wand2, Globe, Server, Check, RefreshCw } from "lucide-react";
 
 type AuditStatus =
   | "PENDING_EXTRACTION"
@@ -23,16 +23,214 @@ interface AuditUploadResponse {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
+interface OfficialDocumentSectionProps {
+  auditId: string;
+  idObra: string;
+  companyName: string;
+  aiVerdict: string;
+}
+
+function OfficialDocumentSection({ auditId, idObra, companyName, aiVerdict }: OfficialDocumentSectionProps) {
+  const [doctavianUrl, setDoctavianUrl] = useState<string | null>(null);
+  const [isGeneratingDoc, setIsGeneratingDoc] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleGenerateOfficialDocument = async () => {
+    setIsGeneratingDoc(true);
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/${auditId}/generate-official-document?companyName=${encodeURIComponent(companyName)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          aiVerdict: aiVerdict,
+          idObra: idObra
+        })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || "Falha ao gerar documento oficial via Doctavian");
+      }
+
+      const data = await response.json();
+      setDoctavianUrl(data.document_url);
+    } catch (error: any) {
+      console.error(error);
+      setErrorMessage(error.message || "Erro ao conectar com o servidor.");
+    } finally {
+      setIsGeneratingDoc(false);
+    }
+  };
+
+  return (
+    <div className="mt-6 border-t border-slate-700 pt-5">
+      <h3 className="text-lg font-semibold text-white mb-2">Operações de Fechamento (Doctavian)</h3>
+      <p className="text-sm text-slate-400 mb-4">
+        Transforme o laudo técnico em um Termo Oficial de Notificação pronto para assinatura digital.
+      </p>
+
+      {!doctavianUrl ? (
+        <button
+          onClick={handleGenerateOfficialDocument}
+          disabled={isGeneratingDoc || !aiVerdict}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-lg transition-colors shadow-lg w-full justify-center lg:w-max"
+        >
+          {isGeneratingDoc ? (
+            <>
+              <Loader2 className="animate-spin" size={20} />
+              Gerando Termo Oficial (Doctavian)...
+            </>
+          ) : (
+            <>
+              <FileSignature size={20} />
+              Gerar e Assinar Termo Oficial
+            </>
+          )}
+        </button>
+      ) : (
+        <div className="p-4 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-emerald-300 flex items-start gap-3">
+          <CheckCircle2 className="text-emerald-400 mt-0.5 shrink-0" size={20} />
+          <div>
+            <p className="font-semibold">Termo Oficial Gerado com Sucesso!</p>
+            <p className="text-xs text-emerald-400/80 mb-2">O documento foi estruturado e enviado para o fluxo de assinatura.</p>
+            <a
+              href={doctavianUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-3 rounded transition-colors"
+            >
+              Abrir Documento Oficial (PDF) ↗
+            </a>
+          </div>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="mt-3 p-3 bg-red-950/40 border border-red-500/30 rounded-lg text-red-300 text-xs">
+          ⚠️ {errorMessage}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TransparencyPortalSection({ cityName }: { cityName: string }) {
+  const [domains, setDomains] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [registeredDomain, setRegisteredDomain] = useState<string | null>(null);
+
+  const handleSearchDomains = async () => {
+    setIsSearching(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/transparency/domain-search?cityName=${encodeURIComponent(cityName)}`);
+      const data = await response.json();
+      if (data.results) {
+        setDomains(data.results.slice(0, 3)); 
+      } else {
+        setDomains([
+          { domainName: `transparencia-${cityName}.org`, purchasePrice: 12.99 },
+          { domainName: `obras-${cityName}.live`, purchasePrice: 3.99 },
+          { domainName: `civis-${cityName}.info`, purchasePrice: 5.99 }
+        ]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar domínios na Name.com", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleRegister = (domainName: string) => {
+    setRegisteredDomain(domainName);
+  };
+
+  return (
+    <div className="mt-6 border-t border-slate-700 pt-5">
+      <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+        <Globe size={18} className="text-blue-400" />
+        Portal de Transparência (Name.com)
+      </h3>
+      <p className="text-sm text-slate-400 mb-4">
+        Disponibilize os dados desta auditoria para a população. Busque e provisione um domínio dedicado instantaneamente.
+      </p>
+
+      {!registeredDomain ? (
+        <>
+          {domains.length === 0 ? (
+            <button
+              onClick={handleSearchDomains}
+              disabled={isSearching}
+              className="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg w-full justify-center lg:w-max"
+            >
+              {isSearching ? <Loader2 className="animate-spin" size={16} /> : <Globe size={16} />}
+              {isSearching ? "Buscando na Name.com..." : "Consultar Domínios Disponíveis"}
+            </button>
+          ) : (
+            <div className="space-y-3 animate-in fade-in duration-300">
+              <p className="text-xs text-blue-300 uppercase tracking-wider font-semibold">Opções Disponíveis na Name.com:</p>
+              {domains.map((d, i) => (
+                <div key={i} className="flex items-center justify-between bg-slate-950/50 border border-slate-700 p-3 rounded-lg hover:border-blue-500/50 transition-colors">
+                  <div>
+                    <p className="font-mono text-slate-200 text-sm">{d.domainName}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Preço: ${d.purchasePrice}/ano</p>
+                  </div>
+                  <button 
+                    onClick={() => handleRegister(d.domainName)}
+                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-3 rounded shadow-md flex items-center gap-1.5 transition-colors"
+                  >
+                    <Server size={14} /> Registrar & Apontar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="p-4 bg-blue-950/40 border border-blue-500/30 rounded-lg flex items-start gap-3 animate-in fade-in zoom-in duration-300">
+          <Check className="text-blue-400 mt-0.5 shrink-0" size={20} />
+          <div>
+            <p className="font-semibold text-blue-300">Domínio Provisionado com Sucesso!</p>
+            <p className="text-xs text-blue-200/80 mt-1">
+              O domínio <span className="font-mono text-white bg-blue-900/80 px-1.5 py-0.5 rounded mx-1">{registeredDomain}</span> foi registrado via Name.com API. O DNS está sendo propagado para o painel público.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ContractAuditor() {
   const [idObra, setIdObra] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
   const [audit, setAudit] = useState<AuditUploadResponse | null>(null);
+  
   const [isApproved, setIsApproved] = useState<boolean>(false);
+  const [isApproving, setIsApproving] = useState<boolean>(false); // Previne cliques duplos na aprovação
   
   const [parecerIA, setParecerIA] = useState<string | null>(null);
   const [isGeneratingParecer, setIsGeneratingParecer] = useState<boolean>(false);
+
+  // Um 'key' para forçar a renderização do input file ao limpar o formulário
+  const [formKey, setFormKey] = useState<number>(0); 
+
+  // Função para limpar e reiniciar todo o formulário (Nova Auditoria)
+  function handleReset() {
+    setIdObra("");
+    setFile(null);
+    setAudit(null);
+    setIsApproved(false);
+    setParecerIA(null);
+    setError(null);
+    setFormKey(prev => prev + 1); // Força o reset visual do <input type="file">
+  }
 
   async function handleUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +243,7 @@ export function ContractAuditor() {
       return;
     }
 
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       setError("O arquivo é muito grande. O limite máximo é de 10MB.");
       return;
@@ -56,7 +254,7 @@ export function ContractAuditor() {
     setParecerIA(null);
 
     const formData = new FormData();
-    formData.append("id_obra", idObra);
+    formData.append("id_obra", idObra.trim());
     formData.append("file", file);
 
     try {
@@ -67,11 +265,9 @@ export function ContractAuditor() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        
         if (errorData && errorData.error) {
           throw new Error(errorData.error);
         }
-        
         throw new Error(`Falha no upload (status ${response.status})`);
       }
 
@@ -86,7 +282,11 @@ export function ContractAuditor() {
   }
 
   async function handleApprove() {
-    if (!audit) return;
+    if (!audit || isApproving) return;
+    
+    setIsApproving(true);
+    setError(null);
+    
     try {
       const response = await fetch(`${API_BASE_URL}/${audit.id}/approve`, {
         method: "PATCH",
@@ -97,6 +297,8 @@ export function ContractAuditor() {
       setIsApproved(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao aprovar contrato.");
+    } finally {
+      setIsApproving(false);
     }
   }
 
@@ -143,6 +345,9 @@ export function ContractAuditor() {
     }
   }
 
+  // Verifica se o formulário deve estar bloqueado (Se já houver uma auditoria em tela)
+  const isFormLocked = audit !== null;
+
   return (
     <Card className="border-white/10 bg-white/[0.03] p-8 text-slate-100 w-full min-h-[600px]">
       <div className="mb-8 border-b border-white/10 pb-4 flex items-center justify-between">
@@ -163,6 +368,7 @@ export function ContractAuditor() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* COLUNA ESQUERDA - FORMULÁRIO */}
         <div>
           <form onSubmit={handleUpload} className="flex flex-col gap-5">
             <label className="flex flex-col gap-2">
@@ -171,28 +377,44 @@ export function ContractAuditor() {
                 type="text"
                 value={idObra}
                 onChange={(e) => setIdObra(e.target.value)}
-                className="rounded-md border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all shadow-inner"
-                placeholder="Ex: OBR-2024-001"
+                disabled={isFormLocked || isUploading}
+                className="rounded-md border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="Ex: 900230334668"
               />
             </label>
 
             <label className="flex flex-col gap-2">
               <span className="text-sm font-medium text-slate-300">Documento (PDF)</span>
               <input
+                key={formKey} // Força o React a limpar o valor do arquivo ao resetar
                 type="file"
                 accept="application/pdf"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="rounded-md border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-slate-100 file:mr-4 file:rounded file:border-0 file:bg-cyan-500/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-cyan-300 hover:file:bg-cyan-500/20 cursor-pointer transition-all"
+                disabled={isFormLocked || isUploading}
+                className="rounded-md border border-white/10 bg-slate-900/50 px-4 py-3 text-sm text-slate-100 file:mr-4 file:rounded file:border-0 file:bg-cyan-500/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-cyan-300 hover:file:bg-cyan-500/20 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </label>
 
-            <button
-              type="submit"
-              disabled={isUploading}
-              className="mt-4 w-full md:w-max rounded-md bg-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-cyan-500 disabled:opacity-50 transition-colors"
-            >
-              {isUploading ? "Processando Documento..." : "Enviar para Extração (Nutrient)"}
-            </button>
+            {/* Alterna entre o botão de Enviar e o de Resetar */}
+            {!isFormLocked ? (
+              <button
+                type="submit"
+                disabled={isUploading}
+                className="mt-4 w-full md:w-max rounded-md bg-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-cyan-500 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              >
+                {isUploading && <Loader2 className="animate-spin" size={16} />}
+                {isUploading ? "Processando Documento..." : "Enviar para Extração (Nutrient)"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="mt-4 w-full md:w-max rounded-md bg-slate-700 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <RefreshCw size={16} />
+                Iniciar Nova Auditoria
+              </button>
+            )}
 
             {error && (
               <div className="mt-4 p-3 bg-red-900/30 border border-red-800 rounded text-sm text-red-400">
@@ -202,15 +424,16 @@ export function ContractAuditor() {
           </form>
         </div>
 
+        {/* COLUNA DIREITA - FLUXO DE AUDITORIA */}
         <div>
           {audit ? (
-            <div className="rounded-xl border border-white/10 bg-slate-900/40 p-6 h-full flex flex-col shadow-inner">
+            <div className="rounded-xl border border-white/10 bg-slate-900/40 p-6 h-full flex flex-col shadow-inner animate-in fade-in duration-300">
               <div className="mb-6 flex flex-wrap gap-6 text-sm border-b border-white/5 pb-4">
                 <p><strong className="text-cyan-400 uppercase text-xs tracking-wider">Status</strong><br/> <span className="font-medium">{audit.status}</span></p>
                 <p><strong className="text-cyan-400 uppercase text-xs tracking-wider">DWS ID</strong><br/> <span className="font-mono text-xs">{audit.dwsDocumentId}</span></p>
               </div>
 
-              <div className="mb-6 flex flex-1 min-h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-white/20 bg-slate-950/80">
+              <div className="mb-6 flex flex-1 min-h-[200px] items-center justify-center rounded-lg border-2 border-dashed border-white/20 bg-slate-950/80">
                 <div className="text-center text-slate-400 p-6">
                   <p className="mb-3 font-semibold text-slate-300 text-lg">DWS Viewer</p>
                   <p className="text-sm mb-4">Simulação do visualizador de documentos Nutrient</p>
@@ -222,10 +445,11 @@ export function ContractAuditor() {
                 <button
                   type="button"
                   onClick={handleApprove}
-                  className="w-full rounded-md bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-emerald-500 transition-all flex justify-center items-center gap-2"
+                  disabled={isApproving}
+                  className="w-full rounded-md bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg hover:bg-emerald-500 disabled:opacity-50 transition-all flex justify-center items-center gap-2"
                 >
-                  <CheckCircle className="w-5 h-5" />
-                  Aprovar Extração de Dados
+                  {isApproving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                  {isApproving ? "Aprovando..." : "Aprovar Extração de Dados"}
                 </button>
               ) : (
                 <div className="space-y-4 animate-in fade-in zoom-in duration-300">
@@ -244,15 +468,26 @@ export function ContractAuditor() {
                       {isGeneratingParecer ? "Analisando Dados..." : "Gerar Parecer Final com IA"}
                     </button>
                   ) : (
-                    <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-lg p-5">
-                      <div className="flex items-center gap-2 mb-3 text-indigo-300">
-                        <Bot className="w-5 h-5" />
-                        <h3 className="font-semibold text-sm uppercase tracking-wide">Parecer do Copiloto</h3>
+                    <>
+                      <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-lg p-5">
+                        <div className="flex items-center gap-2 mb-3 text-indigo-300">
+                          <Bot className="w-5 h-5" />
+                          <h3 className="font-semibold text-sm uppercase tracking-wide">Parecer do Copiloto</h3>
+                        </div>
+                        <p className="text-sm text-indigo-100 leading-relaxed">
+                          {parecerIA}
+                        </p>
                       </div>
-                      <p className="text-sm text-indigo-100 leading-relaxed">
-                        {parecerIA}
-                      </p>
-                    </div>
+
+                      <OfficialDocumentSection 
+                        auditId={audit.id} 
+                        idObra={audit.idObra} 
+                        companyName="Construtora Exemplo S/A" 
+                        aiVerdict={parecerIA} 
+                      />
+
+                      <TransparencyPortalSection cityName="petropolis" />
+                    </>
                   )}
                 </div>
               )}

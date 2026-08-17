@@ -2,16 +2,19 @@ package com.civisanalytics.audit;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,26 +28,32 @@ public class AuditController {
 
 	private final AuditService auditService;
 	private final SerpApiService serpApiService;
+	private final DoctavianService doctavianService;
+	private final NameComService nameComService;
 
-	public AuditController(AuditService auditService, SerpApiService serpApiService) {
+	public AuditController(AuditService auditService, SerpApiService serpApiService,
+			DoctavianService doctavianService, NameComService nameComService) {
 		this.auditService = auditService;
 		this.serpApiService = serpApiService;
+		this.doctavianService = doctavianService;
+		this.nameComService = nameComService;
 	}
 
 	@PostMapping(value = "/upload", consumes = "multipart/form-data", produces = "application/json")
-	public ResponseEntity<?> upload(@RequestParam("id_obra") String idObra, @RequestParam("file") MultipartFile file) throws IOException {
+	public ResponseEntity<?> upload(@RequestParam("id_obra") String idObra, @RequestParam("file") MultipartFile file)
+			throws IOException {
 		if (file.isEmpty()) {
 			return ResponseEntity.badRequest().body("{\"error\": \"O arquivo está vazio.\"}");
 		}
-		
+
 		try (java.io.InputStream is = file.getInputStream()) {
 			byte[] header = new byte[5];
 			is.read(header);
 			String headerString = new String(header);
-			
+
 			if (!headerString.equals("%PDF-")) {
-				return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-						.body("{\"error\": \"Falha de Segurança: O arquivo enviado não é um PDF válido e foi bloqueado.\"}");
+				return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(
+						"{\"error\": \"Falha de Segurança: O arquivo enviado não é um PDF válido e foi bloqueado.\"}");
 			}
 		}
 
@@ -55,26 +64,41 @@ public class AuditController {
 			String text = stripper.getText(document).toLowerCase();
 
 			int score = 0;
-			
-			if (text.contains("contratante")) score++;
-			if (text.contains("contratada")) score++;
-			if (text.contains("cláusula")) score++;
-			if (text.contains("licitação")) score++;
-			if (text.contains("termo de referência")) score++;
-			if (text.contains("diário oficial")) score++;
-			if (text.contains("cnpj")) score++;
+
+			if (text.contains("contratante"))
+				score++;
+			if (text.contains("contratada"))
+				score++;
+			if (text.contains("cláusula"))
+				score++;
+			if (text.contains("licitação"))
+				score++;
+			if (text.contains("termo de referência"))
+				score++;
+			if (text.contains("diário oficial"))
+				score++;
+			if (text.contains("cnpj"))
+				score++;
 
 			if (score < 2) {
-				return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-						.body("{\"error\": \"Conteúdo Inválido: O documento enviado não possui a estrutura jurídica de um contrato ou edital. Por favor, envie o documento correto da obra.\"}");
+				return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(
+						"{\"error\": \"Conteúdo Inválido: O documento enviado não possui a estrutura jurídica de um contrato ou edital. Por favor, envie o documento correto da obra.\"}");
 			}
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body("{\"error\": \"Não foi possível processar o texto do PDF para validação.\"}");
 		}
 
-		AuditUploadResponse response = auditService.uploadAndProcess(idObra, file);
-		return ResponseEntity.status(HttpStatus.CREATED).body(response);
+		try {
+			AuditUploadResponse response = auditService.uploadAndProcess(idObra, file);
+			return ResponseEntity.status(HttpStatus.CREATED).body(response);
+		} catch (DataIntegrityViolationException e) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+					"{\"error\": \"Obra não encontrada! O ID informado não existe na base de dados oficial. Verifique o número e tente novamente.\"}");
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("{\"error\": \"Erro interno ao processar a auditoria: " + e.getMessage() + "\"}");
+		}
 	}
 
 	@GetMapping("/obra/{idObra}")
@@ -91,5 +115,33 @@ public class AuditController {
 	public ResponseEntity<String> runDueDiligence(@RequestParam("companyName") String companyName) {
 		String result = serpApiService.searchCompanyReputation(companyName);
 		return ResponseEntity.ok(result);
+	}
+
+	@PostMapping("/{id}/generate-official-document")
+	public ResponseEntity<?> generateOfficialDocument(@PathVariable UUID id,
+			@RequestParam("companyName") String companyName, @RequestBody Map<String, String> payload) {
+
+		String aiVerdict = payload.get("aiVerdict");
+		String idObra = payload.getOrDefault("idObra", "OBRA-N/A");
+
+		try {
+			String documentUrl = doctavianService.generateAuditReport(idObra, companyName, aiVerdict);
+			return ResponseEntity.ok("{\"document_url\": \"" + documentUrl + "\"}");
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body("{\"error\": \"Erro ao gerar documento oficial: " + e.getMessage() + "\"}");
+		}
+	}
+
+	@GetMapping("/transparency/domain-search")
+	public ResponseEntity<?> searchTransparencyDomain(@RequestParam("cityName") String cityName) {
+		try {
+			String keyword = "transparencia-" + cityName;
+			Map<String, Object> domains = nameComService.searchTransparencyDomain(keyword);
+			return ResponseEntity.ok(domains);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("error", "Erro ao conectar com Name.com: " + e.getMessage()));
+		}
 	}
 }
